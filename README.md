@@ -6,7 +6,7 @@ TODO: Put more badges here.
 
 > IPFS datastore and transfer drivers for OpenNebula
 
-TODO: Fill out this long description.
+The `one-ipfs` drivers allow to deploy OpenNebula VMs with images stored in [IPFS](https://ipfs.io). `one-ipfs` consists of a datastore (`ds_mad`) driver, which allows adding IPFS-backed images to OpenNebula, and a transfer driver (`tm_mad`) which allows deploying those images to OpenNebula nodes.
 
 ## Table of Contents
 
@@ -17,14 +17,25 @@ TODO: Fill out this long description.
 
 ## Install
 
+### Building
+
+The drivers are written in Go. Therefore Go needs to be installed and the Go environment needs to be set up. After that simply run:
+
 ```
+make deps # Make sure the needed go dependencies are available and updated
+make build
+sudo make install
+...
+sudo make uninstall
 ```
 
-## Usage
+`make install` honors `$ONE_LOCATION`, and defaults to `/var/lib/one`.
 
-In `oned.conf`
+### Configuring OpenNebula
 
-Add `ipfs` to the list of drivers in the `DATASTORE_MAD` configuration, which could look like:
+In `oned.conf`:
+
+  - Add `ipfs` to the list of drivers in the `DATASTORE_MAD` configuration, which could look like:
 
 ```
 DATASTORE_MAD = [
@@ -33,7 +44,7 @@ DATASTORE_MAD = [
 ]
 ```
 
-And do the same with the `TM_MAD` configuration:
+  - Add `ipfs` to the list of drivers in the `TM_MAD` configuration:
 
 ```
 TM_MAD = [
@@ -42,7 +53,7 @@ TM_MAD = [
 ]
 ```
 
-Then, add the following `DS_MAD_CONF`:
+  - Add the following `DS_MAD_CONF` section:
 
 ```
 DS_MAD_CONF = [
@@ -50,7 +61,7 @@ DS_MAD_CONF = [
 ]
 ```
 
-And the following `TM_MAD_CONF`:
+  - Add the following `TM_MAD_CONF` section:
 
 ```
 TM_MAD_CONF = [
@@ -58,6 +69,11 @@ TM_MAD_CONF = [
     DS_MIGRATE = "YES"
 ]
 ```
+
+
+## Usage
+
+TODO.
 
 ## Contribute
 
