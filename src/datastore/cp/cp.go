@@ -14,7 +14,7 @@ import (
 
 func main() {
 	args := helpers.DsCmdParseArgs(os.Args)
-	src := helpers.ExtractSource(args.ImgDump)
+	src := helpers.Resolve(helpers.ExtractIPFSID(args.ImgDump))
 	sh := ipfs.NewShell(helpers.IPFSUrl)
 	stat, err := sh.ObjectStat(src)
 	if err != nil {

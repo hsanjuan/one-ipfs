@@ -6,45 +6,57 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/hsanjuan/go-ipfs-api"
 )
 
+// IPFSUrl is the multiaddress string where the IPFS daemon is listening.
 const IPFSUrl = "/ip4/127.0.0.1/tcp/5001"
 
+// ExitWithError logs an error to stderr and exits.
 func ExitWithError(msg string) {
 	LogError(msg)
 	os.Exit(2)
 }
 
+// LogInfo logs a message to stderr prepended by INFO
 func LogInfo(msg string) {
 	Log(fmt.Sprintf("INFO: %s", msg))
 }
 
+// LogError logs a message to stderr prepended by ERROR
 func LogError(msg string) {
 	Log(fmt.Sprintf("ERROR: %s", msg))
 }
 
+// Log logs a message to stderr
 func Log(msg string) {
 	fmt.Fprintln(os.Stderr, msg)
 }
 
+// Image is used to parse several fields in the XML object of an Image.
 type Image struct {
 	XMLName xml.Name `xml:"IMAGE"`
 	Source  string   `xml:"SOURCE"`
 	Path    string   `xml:"PATH"`
 }
 
+// Datastore is used to parse fields in the XML object of a Datastore.
 type Datastore struct {
 	XMLName xml.Name `xml:"DATASTORE"`
 	DSMad   string   `xml:"DS_MAD"`
 	TMMad   string   `xml:"TM_MAD"`
 }
 
+// ImgDescription is used to parse fields in the XML of an Image description.
 type ImgDescription struct {
 	XMLName xml.Name `xml:"DS_DRIVER_ACTION_DATA"`
 	Img     Image
 	DS      Datastore
 }
 
+// ParseDsImgDump parses base64-encoded XML datastore image template which is
+// passed to ds_mad commands
 func ParseDsImgDump(dsImgDump string) ImgDescription {
 	data, err := base64.StdEncoding.DecodeString(dsImgDump)
 	if err != nil {
@@ -59,12 +71,16 @@ func ParseDsImgDump(dsImgDump string) ImgDescription {
 	return result
 }
 
+// DsCmdArgs holds values for arguments which are usually passed to
+// Datastore manager (ds_mad) commands.
 type DsCmdArgs struct {
 	Cmd     string
-	ImgId   string
+	ImgID   string
 	ImgDump ImgDescription
 }
 
+// DsCmdParseArgs parses the arguments provided to a transfer manager
+// command and returns them as a DsCmdArgs object.
 func DsCmdParseArgs(args []string) *DsCmdArgs {
 	if len(args) < 3 {
 		ExitWithError(
@@ -72,21 +88,25 @@ func DsCmdParseArgs(args []string) *DsCmdArgs {
 	}
 	return &DsCmdArgs{
 		Cmd:     args[0],
-		ImgId:   args[2],
+		ImgID:   args[2],
 		ImgDump: ParseDsImgDump(args[1]),
 	}
 }
 
+// TMCmdArgs holds values for arguments which are usually passed to
+// transfer manager (tm_mad) commands.
 type TMCmdArgs struct {
 	Fe         string
 	Source     string
 	Host       string
 	RemotePath string
-	VMId       string
-	DSId       string
-	SnapId     string
+	VMID       string
+	DsID       string
+	SnapID     string
 }
 
+// TMCmdParseArgs parses the arguments provided to a transfer manager
+// command and returns them as a TMCmdArgs object.
 func TMCmdParseArgs(args []string, op string) *TMCmdArgs {
 	tmArgs := TMCmdArgs{}
 	switch op {
@@ -94,17 +114,17 @@ func TMCmdParseArgs(args []string, op string) *TMCmdArgs {
 		if len(args) < 5 {
 			ExitWithError("Not enough arguments")
 		}
-		fe_source := strings.Split(args[1], ":")
-		host_rp := strings.Split(args[2], ":")
-		if len(fe_source) != 2 || len(host_rp) != 2 {
+		feSource := strings.Split(args[1], ":")
+		hostRemotePath := strings.Split(args[2], ":")
+		if len(feSource) != 2 || len(hostRemotePath) != 2 {
 			ExitWithError("Arguments not properly formatted")
 		}
-		tmArgs.Fe = fe_source[0]
-		tmArgs.Source = fe_source[1]
-		tmArgs.Host = host_rp[0]
-		tmArgs.RemotePath = host_rp[1]
-		tmArgs.VMId = args[3]
-		tmArgs.DSId = args[4]
+		tmArgs.Fe = feSource[0]
+		tmArgs.Source = feSource[1]
+		tmArgs.Host = hostRemotePath[0]
+		tmArgs.RemotePath = hostRemotePath[1]
+		tmArgs.VMID = args[3]
+		tmArgs.DsID = args[4]
 	case "cpds":
 		ExitWithError("test")
 	default:
@@ -113,17 +133,43 @@ func TMCmdParseArgs(args []string, op string) *TMCmdArgs {
 	return &tmArgs
 }
 
-func ExtractSource(img ImgDescription) string {
-	src := img.Img.Source
-	path := img.Img.Path
-	if src != "" {
-		src = strings.TrimPrefix(src, "/ipfs/")
-	} else if path != "" {
-		// Upon clone, OpenNebula places SOURCE into PATH
-		// Maybe a bug who knows.
-		src = strings.TrimPrefix(path, "/ipfs/")
+// ExtractIPFSID returns the value of the Source field of an Image description
+// or falls back to the value of the Path field. It checks that the
+// values are a valid URI (fs:/ipns/ or fs:/ipfs/) or exits with an error.
+func ExtractIPFSID(img ImgDescription) string {
+	imgSrc := img.Img.Source
+	imgPath := img.Img.Path
+	var src string
+	if imgSrc != "" {
+		src = imgSrc
+	} else if imgPath != "" {
+		src = imgPath
 	} else {
 		ExitWithError("Must provide an IPFS address as SOURCE or PATH")
 	}
+
+	if !strings.HasPrefix(src, "fs:/ipfs/") &&
+		!strings.HasPrefix(src, "fs:/ipns/") {
+		ExitWithError("Wrong IPFS/IPNS path")
+	}
 	return src
+}
+
+// Resolve receives an ipfsID in the form fs:/ipfs/[hash] or fs:/ipns/[id].
+// It returns the [hash] for IPFS URIs. For IPNS URIs, it resolves them and
+// returns the hash they are pointing to.
+func Resolve(ipfsID string) string {
+	if strings.HasPrefix(ipfsID, "fs:/ipfs/") {
+		return strings.TrimPrefix(ipfsID, "fs:/ipfs/")
+	} else if strings.HasPrefix(ipfsID, "fs:/ipns/") {
+		ipfs := strings.TrimPrefix(ipfsID, "fs:/ipns/")
+		sh := shell.NewShell(IPFSUrl)
+		hash, err := sh.Resolve(ipfs)
+		if err != nil {
+			ExitWithError(fmt.Sprintf("Error resolving: %s", err))
+		}
+		return hash
+	}
+	ExitWithError(fmt.Sprintf("Wrong IPFS URI: %s", ipfsID))
+	return ""
 }

@@ -11,6 +11,11 @@ all: build
 
 build: $(TARGETS_DS) $(TARGETS_TM)
 
+check:
+	golint helpers
+	for module in $(DS); do golint src/datastore/$(module); done
+	for module in $(TM); do golint src/tm/$(module); done
+
 install: build
 	install -m 0755 -d $(ONE_LOCATION)/remotes/datastore/ipfs
 	install -m 0755 -d $(ONE_LOCATION)/remotes/tm/ipfs
@@ -30,6 +35,7 @@ $(TARGETS_TM):
 deps:
 	go get -u github.com/hsanjuan/go-ipfs-api
 	go get -u github.com/hsanjuan/one-ipfs/helpers
+	go get -u github.com/golang/lint/golint
 
 clean:
 	rm -fv remotes/datastore/ipfs/* remotes/tm/ipfs/*_remote

@@ -15,7 +15,8 @@ import (
 
 func main() {
 	args := helpers.TMCmdParseArgs(os.Args, "clone")
-	src := args.Source
+	ipfsId := args.Source
+	src := helpers.Resolve(ipfsId)
 	dst := args.RemotePath
 	dir := filepath.Dir(dst)
 	err := os.Mkdir(dir, 0700)
