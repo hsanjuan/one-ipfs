@@ -6,7 +6,7 @@ TODO: Put more badges here.
 
 > IPFS datastore and transfer drivers for OpenNebula
 
-The `one-ipfs` drivers allow to deploy OpenNebula VMs with images stored in [IPFS](https://ipfs.io). `one-ipfs` consists of a datastore (`ds_mad`) driver, which allows adding IPFS-backed images to OpenNebula, and a transfer driver (`tm_mad`) which allows deploying those images to OpenNebula nodes.
+The `one-ipfs` drivers allow to deploy OpenNebula VMs with images stored in [IPFS](https://ipfs.io), a distributed/decentralized filesystem. `one-ipfs` consists of a datastore (`ds_mad`) driver, which allows adding IPFS-backed images to OpenNebula, and a transfer driver (`tm_mad`) which allows deploying those images to OpenNebula nodes.
 
 ## Table of Contents
 
@@ -70,10 +70,63 @@ TM_MAD_CONF = [
 ]
 ```
 
+### Configuring IPFS
+
+You will need an IPFS daemon running on every OpenNebula host (including the Frontend):
+
+  - Learn how to install IPFS: https://ipfs.io/docs/install/
+  - Learn how to run IPFS: https://ipfs.io/docs/getting-started/
+
 
 ## Usage
 
-TODO.
+### Creating the IPFS datastore
+
+```
+$> cat ipfs-datastore.template
+NAME=IPFS
+DS_MAD=ipfs
+TM_MAD=ipfs
+$> onedatastore create -c 0 ipfs-datastore.template
+```
+
+### Adding an image
+
+IPFS supported by the driver are in the form:
+
+  - `/ipfs/<hash>` - Supported by `PATH` and `SOURCE` attributes
+  - `/ipns/<id>` - Supported by `PATH` and `SOURCE` attributes
+  - `fs:/ipfs/<hash>` - Supported by `PATH` attribute only
+  - `fs:/ipns/<id>` - Supported by `PATH` attribute only
+
+The OpenNebula CLI won't allow to add IPFS images by `PATH` due to a strict safeguard check (any non http(s) paths get interpreted as filesystems paths). Therefore they need to be created with `--source` providing size manually. This limitation is not present in Sunstone, where `PATH` is mandatory instead, an it is not possible to add images by indicating only `SOURCE`. Adding images by `PATH` via Sunstone has the advantange that the IPFS IDs are checked for correctness and the image size is automatically computed.
+
+
+#### CLI
+
+Using an IPFS hash:
+
+```
+oneimage create -d IPFS --name "Slux Linux" --type OS --source /ipfs/QmeVJdKvn5wPNBZGzPSjcc8WZQjWCnCADdnqauS1AKhAcw --size 225
+```
+
+Using an IPNS address:
+
+```
+oneimage create -d IPFS --name "Slux Linux" --type OS --source /ipns/QmXZrtE5jQwXNqCJMfHUTQkvhQ4ZAnqMnmzFMJfLewur2n --size 225
+```
+
+#### Sunstone
+
+[Sunstone screenshot](https://ipfs.io/ipfs/QmRkekd6KAR7wXwZL9ewp5t4JvS53anaTU9Qi2ANApsS9G)
+
+
+### Launching Virtual Machines
+
+You can use the registered images and attach them to VMs like any other image. Upon deployment, they are copied to the system datastore by the IPFS daemon running in the hypervisor and run from there.
+
+Currently, only **non-persistent** images are supported, and operations like migrations or snapshots are not tested/implemented.
+
 
 ## Contribute
 
