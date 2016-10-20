@@ -12,11 +12,12 @@ import (
 
 func main() {
 	args := helpers.DsCmdParseArgs(os.Args)
-	src := helpers.Resolve(helpers.ExtractIPFSID(args.ImgDump))
+	ipfsId := helpers.ExtractIPFSID(args.ImgDump)
+	src := helpers.Resolve(ipfsId)
 	sh := ipfs.NewShell(helpers.IPFSUrl)
 	_, err := sh.ObjectStat(src)
 	if err != nil {
 		helpers.ExitWithError("IPFS object not found")
 	}
-	fmt.Println(src) // Seems a valid source, so we keep it
+	fmt.Println(ipfsId) // Seems a valid source, so we keep it
 }

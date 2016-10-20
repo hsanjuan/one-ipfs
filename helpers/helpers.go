@@ -149,26 +149,27 @@ func ExtractIPFSID(img ImgDescription) string {
 	}
 
 	if !strings.HasPrefix(src, "fs:/ipfs/") &&
-		!strings.HasPrefix(src, "fs:/ipns/") {
+		!strings.HasPrefix(src, "fs:/ipns/") &&
+		!strings.HasPrefix(src, "/ipfs/") &&
+		!strings.HasPrefix(src, "/ipns/") {
 		ExitWithError("Wrong IPFS/IPNS path")
 	}
-	return src
+	return strings.TrimPrefix(src, "fs:")
 }
 
 // Resolve receives an ipfsID in the form fs:/ipfs/[hash] or fs:/ipns/[id].
 // It returns the [hash] for IPFS URIs. For IPNS URIs, it resolves them and
 // returns the hash they are pointing to.
 func Resolve(ipfsID string) string {
-	if strings.HasPrefix(ipfsID, "fs:/ipfs/") {
-		return strings.TrimPrefix(ipfsID, "fs:/ipfs/")
-	} else if strings.HasPrefix(ipfsID, "fs:/ipns/") {
-		ipfs := strings.TrimPrefix(ipfsID, "fs:/ipns/")
+	if strings.HasPrefix(ipfsID, "/ipfs/") {
+		return strings.TrimPrefix(ipfsID, "/ipfs/")
+	} else if strings.HasPrefix(ipfsID, "/ipns/") {
 		sh := shell.NewShell(IPFSUrl)
-		hash, err := sh.Resolve(ipfs)
+		hash, err := sh.Resolve(ipfsID)
 		if err != nil {
 			ExitWithError(fmt.Sprintf("Error resolving: %s", err))
 		}
-		return hash
+		return strings.TrimPrefix(hash, "/ipfs/")
 	}
 	ExitWithError(fmt.Sprintf("Wrong IPFS URI: %s", ipfsID))
 	return ""
