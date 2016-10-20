@@ -1,7 +1,7 @@
 # one-ipfs
 
 
-![OpenNebula Compatibility](https://img.shields.io/badge/OpenNebula-5.2-brightgreen.svg) [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+![OpenNebula Compatibility](https://img.shields.io/badge/OpenNebula-5.2-brightgreen.svg) [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg](https://github.com/RichardLitt/standard-readme)
 
 > IPFS datastore and transfer drivers for OpenNebula
 
