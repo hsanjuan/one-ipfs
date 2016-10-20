@@ -1,8 +1,7 @@
 # one-ipfs
 
 
-[![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
-TODO: Put more badges here.
+![OpenNebula Compatibility](https://img.shields.io/badge/OpenNebula-5.2-brightgreen.svg) [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
 > IPFS datastore and transfer drivers for OpenNebula
 
@@ -77,6 +76,8 @@ You will need an IPFS daemon running on every OpenNebula host (including the Fro
   - Learn how to install IPFS: https://ipfs.io/docs/install/
   - Learn how to run IPFS: https://ipfs.io/docs/getting-started/
 
+**DISCLAIMER**: IPFS does not yet support private networks. That means it is difficult to isolate an IPFS cluster as nodes will attempt by all means to discover/contact other peers which might be outside your [private] network (using bootstrap configurations, mDNS broadcasts etc). This may have privacy/security implications if you want to use IPFS to distribute sensitive content. Private networks implementation is in the works, and you can track the progress on this feature here: https://github.com/ipfs/go-ipfs/issues/1633
+
 
 ## Usage
 
@@ -92,14 +93,14 @@ $> onedatastore create -c 0 ipfs-datastore.template
 
 ### Adding an image
 
-IPFS supported by the driver are in the form:
+IPFS file paths/URIs supported by the driver are in the form:
 
   - `/ipfs/<hash>` - Supported by `PATH` and `SOURCE` attributes
   - `/ipns/<id>` - Supported by `PATH` and `SOURCE` attributes
   - `fs:/ipfs/<hash>` - Supported by `PATH` attribute only
   - `fs:/ipns/<id>` - Supported by `PATH` attribute only
 
-The OpenNebula CLI won't allow to add IPFS images by `PATH` due to a strict safeguard check (any non http(s) paths get interpreted as filesystems paths). Therefore they need to be created with `--source` providing size manually. This limitation is not present in Sunstone, where `PATH` is mandatory instead, an it is not possible to add images by indicating only `SOURCE`. Adding images by `PATH` via Sunstone has the advantange that the IPFS IDs are checked for correctness and the image size is automatically computed.
+The OpenNebula CLI won't allow to add IPFS images by `PATH` due to a strict safeguard check (any non http(s) paths get interpreted as filesystems paths). Therefore they need to be created with `--source`, providing size manually. This limitation is not present in Sunstone, where `PATH` is mandatory instead, an it is not possible to add images by indicating only `SOURCE`. Adding images by `PATH` via Sunstone has the advantange that the IPFS IDs are checked for correctness and the image size is automatically computed.
 
 
 #### CLI
@@ -118,14 +119,14 @@ oneimage create -d IPFS --name "Slux Linux" --type OS --source /ipns/QmXZrtE5jQw
 
 #### Sunstone
 
-[Sunstone screenshot](https://ipfs.io/ipfs/QmRkekd6KAR7wXwZL9ewp5t4JvS53anaTU9Qi2ANApsS9G)
+![Sunstone screenshot](https://ipfs.io/ipfs/QmRkekd6KAR7wXwZL9ewp5t4JvS53anaTU9Qi2ANApsS9G)
 
 
 ### Launching Virtual Machines
 
-You can use the registered images and attach them to VMs like any other image. Upon deployment, they are copied to the system datastore by the IPFS daemon running in the hypervisor and run from there.
+You can use the registered images and attach them to VMs like any other image. Upon deployment, they are copied to the system datastore by TM driver, which uses the local IPFS daemon to fetch them.
 
-Currently, only **non-persistent** images are supported, and operations like migrations or snapshots are not tested/implemented.
+Currently, only **non-persistent** images are supported, and **operations like migrations or snapshots are not tested/implemented**.
 
 
 ## Contribute
