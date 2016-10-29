@@ -7,6 +7,8 @@
 
 The `one-ipfs` drivers allow to deploy OpenNebula VMs with images stored in [IPFS](https://ipfs.io), a distributed/decentralized filesystem. `one-ipfs` consists of a datastore (`ds_mad`) driver, which allows adding IPFS-backed images to OpenNebula, and a transfer driver (`tm_mad`) which allows deploying those images to OpenNebula nodes.
 
+This prototype was [presented at OpenNebulaConf 2016](https://ipfs.io/ipfs/QmbggbKtniVRYhDXLsVtxfUB1ynNr2kVt4wh3otaNUpqYb).
+
 ## Table of Contents
 
 - [Install](#install)
